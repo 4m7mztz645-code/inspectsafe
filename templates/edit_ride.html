@@ -1,0 +1,3 @@
+{% extends "base.html" %}{% block title %}Edit Ride{% endblock %}{% block content %}<h1>Edit {{ride.name}}</h1><div class="card"><form method="post" enctype="multipart/form-data">
+<label>Ride name</label><input name="name" value="{{ride.name}}" required><label>Serial / ID</label><input name="serial" value="{{ride.serial or ''}}"><label>ADIPS ID number</label><input name="adips_id" value="{{ride.adips_id or ''}}">
+{% if ride.photo %}<img class="ride-photo detail-photo" src="{{url_for('ride_photo',ride_id=ride.id)}}" alt="{{ride.name}}">{% endif %}<label>Replace ride photo</label><input name="photo" type="file" accept="image/*"><button class="primary">Save Ride</button></form></div>{% endblock %}

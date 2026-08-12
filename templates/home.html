@@ -2,7 +2,7 @@
 <h1>New Daily Check</h1>{% if not rides %}<div class="card"><p>No active rides are set up yet.</p>
 {% if session.get('role')=='admin' %}<a class="button" href="{{url_for('rides')}}">Set up rides</a>{% endif %}</div>{% else %}
 <form method="post" action="{{url_for('save_check')}}">
-<div class="card grid"><div><label>Ride</label><select name="ride_id" required>{% for r in rides %}<option value="{{r.id}}">{{r.name}}{% if r.serial %} — {{r.serial}}{% endif %}</option>{% endfor %}</select></div>
+<div class="card grid"><div><label>Ride</label><select name="ride_id" required>{% for r in rides %}<option value="{{r.id}}">{{r.name}}{% if r.serial %} — {{r.serial}}{% endif %}{% if r.adips_id %} · ADIPS {{r.adips_id}}{% endif %}</option>{% endfor %}</select></div>
 <div><label>Date</label><input type="date" name="check_date" value="{{today}}" required></div>
 <div><label>Inspector</label><input value="{{session.get('full_name')}}" disabled></div>
 <div><label>Weather / Conditions</label><input name="weather"></div></div>

@@ -1,4 +1,2 @@
-{% extends "base.html" %}{% block title %}Checklist Setup{% endblock %}{% block content %}
-<h1>Checklist Setup</h1><div class="card"><form method="post"><label>One inspection item per line</label>
-<textarea name="template" rows="26">{% for c in checks %}{{c.item}}{% if not loop.last %}
-{% endif %}{% endfor %}</textarea><button class="primary">Save Checklist</button></form></div>{% endblock %}
+{% extends "base.html" %}{% block title %}Checklist Setup{% endblock %}{% block content %}<h1>Checklist Setup</h1><div class="card"><h2>Add Check</h2><form method="post"><label>Check description</label><input name="item" placeholder="e.g. Check restraint locking pins" required><button class="primary">Add Check</button></form></div>
+<div class="card"><h2>Current Checks</h2>{% if checks %}{% for c in checks %}<div class="check-admin-row"><div><b>{{loop.index}}.</b> {{c.item}}</div><form method="post" action="{{url_for('delete_check',check_id=c.id)}}" onsubmit="return confirm('Remove this check?')"><button class="small danger-btn">Remove</button></form></div>{% endfor %}{% else %}<p>No checks have been added yet.</p>{% endif %}</div>{% endblock %}

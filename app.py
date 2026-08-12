@@ -82,6 +82,45 @@ def init_db():
                 item TEXT NOT NULL,
                 sort_order INTEGER NOT NULL
             )""")
+            c.execute("ALTER TABLE rides ADD COLUMN IF NOT EXISTS adips_id TEXT")
+            c.execute("ALTER TABLE rides ADD COLUMN IF NOT EXISTS photo BYTEA")
+            c.execute("ALTER TABLE rides ADD COLUMN IF NOT EXISTS photo_mime TEXT")
+            c.execute("""CREATE TABLE IF NOT EXISTS maintenance_logs(
+                id BIGSERIAL PRIMARY KEY,
+                ride_id BIGINT NOT NULL,
+                ride_name TEXT NOT NULL,
+                log_date DATE NOT NULL,
+                category TEXT,
+                description TEXT NOT NULL,
+                action_taken TEXT,
+                parts_used TEXT,
+                out_of_service BOOLEAN NOT NULL DEFAULT FALSE,
+                returned_to_service BOOLEAN NOT NULL DEFAULT FALSE,
+                user_id BIGINT,
+                user_name TEXT,
+                username TEXT,
+                created_at TIMESTAMPTZ NOT NULL
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS accident_reports(
+                id BIGSERIAL PRIMARY KEY,
+                ride_id BIGINT NOT NULL,
+                ride_name TEXT NOT NULL,
+                incident_date DATE NOT NULL,
+                incident_time TEXT,
+                location TEXT,
+                person_name TEXT,
+                person_contact TEXT,
+                injury_details TEXT,
+                incident_description TEXT NOT NULL,
+                immediate_action TEXT,
+                witnesses TEXT,
+                reported_to TEXT,
+                ride_stopped BOOLEAN NOT NULL DEFAULT FALSE,
+                user_id BIGINT,
+                user_name TEXT,
+                username TEXT,
+                created_at TIMESTAMPTZ NOT NULL
+            )""")
             c.execute("""CREATE TABLE IF NOT EXISTS inspections(
                 id BIGSERIAL PRIMARY KEY,
                 ride_id BIGINT,
@@ -395,13 +434,66 @@ def rides():
             if request.method=="POST":
                 name=request.form.get("name","").strip()
                 serial=request.form.get("serial","").strip()
+                adips_id=request.form.get("adips_id","").strip()
+                photo_file=request.files.get("photo")
+                photo=None
+                photo_mime=None
+                if photo_file and photo_file.filename:
+                    data=photo_file.read()
+                    if len(data) > 5 * 1024 * 1024:
+                        flash("Ride photo must be 5 MB or smaller.")
+                        c.execute("SELECT * FROM rides ORDER BY active DESC,name")
+                        return render_template("rides.html", rides=c.fetchall())
+                    photo=data
+                    photo_mime=photo_file.mimetype or "image/jpeg"
                 if name:
-                    c.execute("INSERT INTO rides(name,serial,active) VALUES (%s,%s,TRUE)",(name,serial))
+                    c.execute("""INSERT INTO rides(name,serial,adips_id,photo,photo_mime,active)
+                                 VALUES (%s,%s,%s,%s,%s,TRUE)""",
+                              (name,serial,adips_id,photo,photo_mime))
                     conn.commit()
                     flash("Ride added.")
             c.execute("SELECT * FROM rides ORDER BY active DESC,name")
             rows=c.fetchall()
     return render_template("rides.html", rides=rows)
+
+@app.route("/admin/ride/<int:ride_id>/edit", methods=["GET","POST"])
+@admin_required
+def edit_ride(ride_id):
+    with db() as conn:
+        with conn.cursor() as c:
+            c.execute("SELECT * FROM rides WHERE id=%s",(ride_id,))
+            ride=c.fetchone()
+            if not ride:
+                return "Ride not found",404
+            if request.method=="POST":
+                name=request.form.get("name","").strip()
+                serial=request.form.get("serial","").strip()
+                adips_id=request.form.get("adips_id","").strip()
+                photo_file=request.files.get("photo")
+                if photo_file and photo_file.filename:
+                    data=photo_file.read()
+                    if len(data) > 5 * 1024 * 1024:
+                        flash("Ride photo must be 5 MB or smaller.")
+                        return render_template("edit_ride.html", ride=ride)
+                    c.execute("""UPDATE rides SET name=%s,serial=%s,adips_id=%s,photo=%s,photo_mime=%s WHERE id=%s""",
+                              (name,serial,adips_id,data,photo_file.mimetype or "image/jpeg",ride_id))
+                else:
+                    c.execute("UPDATE rides SET name=%s,serial=%s,adips_id=%s WHERE id=%s",(name,serial,adips_id,ride_id))
+                conn.commit()
+                flash("Ride updated.")
+                return redirect(url_for("rides"))
+    return render_template("edit_ride.html", ride=ride)
+
+@app.route("/ride/<int:ride_id>/photo")
+@login_required
+def ride_photo(ride_id):
+    with db() as conn:
+        with conn.cursor() as c:
+            c.execute("SELECT photo,photo_mime FROM rides WHERE id=%s",(ride_id,))
+            ride=c.fetchone()
+            if not ride or not ride["photo"]:
+                return "",404
+            return Response(bytes(ride["photo"]), mimetype=ride["photo_mime"] or "image/jpeg")
 
 @app.route("/admin/ride/<int:ride_id>/toggle",methods=["POST"])
 @admin_required
@@ -421,16 +513,86 @@ def checklist():
     with db() as conn:
         with conn.cursor() as c:
             if request.method=="POST":
-                items=[x.strip() for x in request.form.get("template","").splitlines() if x.strip()]
-                if items:
-                    c.execute("DELETE FROM checklist")
-                    for i,item in enumerate(items):
-                        c.execute("INSERT INTO checklist(item,sort_order) VALUES (%s,%s)",(item,i))
+                item=request.form.get("item","").strip()
+                if item:
+                    c.execute("SELECT COALESCE(MAX(sort_order),-1)+1 AS next_order FROM checklist")
+                    next_order=c.fetchone()["next_order"]
+                    c.execute("INSERT INTO checklist(item,sort_order) VALUES (%s,%s)",(item,next_order))
                     conn.commit()
-                    flash("Checklist updated.")
+                    flash("Check added.")
             c.execute("SELECT * FROM checklist ORDER BY sort_order,id")
             checks=c.fetchall()
     return render_template("checklist.html", checks=checks)
+
+@app.route("/admin/checklist/<int:check_id>/delete", methods=["POST"])
+@admin_required
+def delete_check(check_id):
+    with db() as conn:
+        with conn.cursor() as c:
+            c.execute("DELETE FROM checklist WHERE id=%s",(check_id,))
+            conn.commit()
+    flash("Check removed.")
+    return redirect(url_for("checklist"))
+
+
+@app.route("/ride/<int:ride_id>")
+@login_required
+def ride_detail(ride_id):
+    with db() as conn:
+        with conn.cursor() as c:
+            c.execute("SELECT * FROM rides WHERE id=%s",(ride_id,))
+            ride=c.fetchone()
+            if not ride:
+                return "Ride not found",404
+            c.execute("SELECT * FROM maintenance_logs WHERE ride_id=%s ORDER BY log_date DESC,id DESC",(ride_id,))
+            maintenance=c.fetchall()
+            c.execute("SELECT * FROM accident_reports WHERE ride_id=%s ORDER BY incident_date DESC,id DESC",(ride_id,))
+            accidents=c.fetchall()
+    return render_template("ride_detail.html", ride=ride, maintenance=maintenance, accidents=accidents)
+
+@app.route("/ride/<int:ride_id>/maintenance/add", methods=["GET","POST"])
+@login_required
+def add_maintenance(ride_id):
+    with db() as conn:
+        with conn.cursor() as c:
+            c.execute("SELECT * FROM rides WHERE id=%s",(ride_id,))
+            ride=c.fetchone()
+            if not ride:
+                return "Ride not found",404
+            if request.method=="POST":
+                description=request.form.get("description","").strip()
+                if not description:
+                    flash("Maintenance description is required.")
+                else:
+                    c.execute("""INSERT INTO maintenance_logs(ride_id,ride_name,log_date,category,description,action_taken,parts_used,out_of_service,returned_to_service,user_id,user_name,username,created_at)
+                                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",(
+                        ride["id"],ride["name"],request.form.get("log_date",date.today().isoformat()),request.form.get("category","").strip(),description,request.form.get("action_taken","").strip(),request.form.get("parts_used","").strip(),request.form.get("out_of_service")=="on",request.form.get("returned_to_service")=="on",session["user_id"],session["full_name"],session["username"],datetime.now()))
+                    conn.commit()
+                    flash("Maintenance log added.")
+                    return redirect(url_for("ride_detail",ride_id=ride_id))
+    return render_template("maintenance_form.html", ride=ride, today=date.today().isoformat())
+
+@app.route("/ride/<int:ride_id>/accident/add", methods=["GET","POST"])
+@login_required
+def add_accident(ride_id):
+    with db() as conn:
+        with conn.cursor() as c:
+            c.execute("SELECT * FROM rides WHERE id=%s",(ride_id,))
+            ride=c.fetchone()
+            if not ride:
+                return "Ride not found",404
+            if request.method=="POST":
+                description=request.form.get("incident_description","").strip()
+                if not description:
+                    flash("Incident description is required.")
+                else:
+                    c.execute("""INSERT INTO accident_reports(ride_id,ride_name,incident_date,incident_time,location,person_name,person_contact,injury_details,incident_description,immediate_action,witnesses,reported_to,ride_stopped,user_id,user_name,username,created_at)
+                                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",(
+                        ride["id"],ride["name"],request.form.get("incident_date",date.today().isoformat()),request.form.get("incident_time","").strip(),request.form.get("location","").strip(),request.form.get("person_name","").strip(),request.form.get("person_contact","").strip(),request.form.get("injury_details","").strip(),description,request.form.get("immediate_action","").strip(),request.form.get("witnesses","").strip(),request.form.get("reported_to","").strip(),request.form.get("ride_stopped")=="on",session["user_id"],session["full_name"],session["username"],datetime.now()))
+                    conn.commit()
+                    flash("Accident report added.")
+                    return redirect(url_for("ride_detail",ride_id=ride_id))
+    return render_template("accident_form.html", ride=ride, today=date.today().isoformat())
 
 @app.route("/admin/export.csv")
 @admin_required

@@ -72,3 +72,11 @@ IMPORTANT
 ---------
 Do not use the old static Netlify version for this multi-user build.
 This version requires a live Python server and PostgreSQL database.
+
+
+ENHANCED RIDE RECORDS
+---------------------
+Each ride now supports a photo, ADIPS ID number, maintenance history and accident/incident history.
+Checklist editing is now one check at a time using the Add Check form.
+Ride photos are stored in PostgreSQL and limited to 5 MB.
+Maintenance and accident entries record the logged-in staff member and timestamp.

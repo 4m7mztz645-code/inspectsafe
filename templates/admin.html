@@ -2,7 +2,7 @@
 <div class="title-row"><h1>Management Dashboard</h1><a class="button" href="{{url_for('export_csv')}}">Export CSV</a></div>
 <div class="stats"><div class="stat"><span>{{totals.active_users}}</span><b>Active staff</b></div><div class="stat"><span>{{totals.active_rides}}</span><b>Active rides</b></div>
 <div class="stat"><span>{{totals.total_checks}}</span><b>Total checks</b></div><div class="stat"><span>{{totals.attention_checks}}</span><b>Need attention</b></div></div>
-<div class="adminlinks"><a class="cardlink" href="{{url_for('users')}}">Manage Staff</a><a class="cardlink" href="{{url_for('rides')}}">Manage Rides</a>
+<div class="adminlinks"><a class="cardlink" href="{{url_for('users')}}">Manage Staff</a><a class="cardlink" href="{{url_for('rides')}}">Manage Rides & Logs</a>
 <a class="cardlink" href="{{url_for('checklist')}}">Edit Checklist</a><a class="cardlink" href="{{url_for('history')}}">All Inspections</a></div>
 <div class="card"><h2>Recent Staff Logins</h2><div class="tablewrap"><table><thead><tr><th>Staff</th><th>Username</th><th>Login time</th></tr></thead><tbody>
 {% for x in recent_logins %}<tr><td>{{x.full_name}}</td><td>@{{x.username}}</td><td>{{x.logged_in_at}}</td></tr>{% endfor %}</tbody></table></div></div>
