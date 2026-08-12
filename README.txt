@@ -113,3 +113,20 @@ Every ride now contains:
 Administrators can upload multiple documents per section. Staff can view them.
 Each document stores its title, filename, optional document date, optional expiry/renewal
 date, notes, uploader and upload timestamp. Maximum upload size is 15 MB.
+
+
+LOGO + DEVICE HOME SCREEN ICON
+------------------------------
+This version includes:
+- Inspect Safe logo displayed at the top of every page
+- App icon assets for device home screens
+- Web manifest for Android install/home-screen icon
+- Apple touch icon for iPhone/iPad home-screen icon
+
+Files added:
+- static/inspectsafe_logo.png
+- static/icon-192.png
+- static/icon-512.png
+- static/apple-touch-icon.png
+- static/favicon-32.png
+- static/manifest.json

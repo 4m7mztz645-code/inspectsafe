@@ -5,14 +5,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111827">
-<title>{% block title %}RideSafe{% endblock %}</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Inspect Safe">
+<title>{% block title %}Inspect Safe{% endblock %}</title>
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.png') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 <link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}">
 </head>
 <body>
 <header>
-  <div>
-    <div class="brand">RideSafe</div>
-    <div class="sub">{{ company.name if company else 'Amusement Ride Checks' }}</div>
+  <div class="brand-wrap">
+    <img class="site-logo" src="{{ url_for('static', filename='inspectsafe_logo.png') }}" alt="Inspect Safe logo">
+    <div class="brand-text">
+      <div class="brand">Inspect Safe</div>
+      <div class="sub">{{ company.name if company else 'Amusement Ride Checks' }}</div>
+    </div>
   </div>
   {% if session.get('user_id') %}
   <nav>
