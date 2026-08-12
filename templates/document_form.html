@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block title %}Add Document - {{ride.name}}{% endblock %}{% block content %}
+<div class="title-row"><div><h1>Add Ride Document</h1><p>{{ride.name}}{% if ride.adips_id %} · ADIPS {{ride.adips_id}}{% endif %}</p></div><a class="button" href="{{url_for('ride_detail',ride_id=ride.id)}}">Back to Ride</a></div>
+<div class="card"><form method="post" enctype="multipart/form-data">
+<label>Document section</label><select name="category" required>{% for key,label in categories.items() %}<option value="{{key}}" {% if key==selected_category %}selected{% endif %}>{{label}}</option>{% endfor %}</select>
+<label>Document title</label><input name="title" placeholder="e.g. 2026 Annual ADIPS Declaration" required>
+<div class="grid"><div><label>Document date</label><input type="date" name="document_date"></div><div><label>Expiry / renewal date</label><input type="date" name="expiry_date"></div></div>
+<label>File</label><input type="file" name="document" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp,.txt" required>
+<p class="muted">PDF, Word, Excel, image or text file. Maximum 15 MB.</p>
+<label>Notes</label><textarea name="notes" rows="4" placeholder="Optional notes, certificate number, training details, insurer, etc."></textarea>
+<button class="primary">Upload Document</button></form></div>{% endblock %}

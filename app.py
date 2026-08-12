@@ -151,6 +151,24 @@ def init_db():
                 note TEXT,
                 sort_order INTEGER
             )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS ride_documents(
+                id BIGSERIAL PRIMARY KEY,
+                ride_id BIGINT NOT NULL,
+                category TEXT NOT NULL,
+                title TEXT NOT NULL,
+                filename TEXT NOT NULL,
+                mime_type TEXT,
+                file_data BYTEA NOT NULL,
+                document_date DATE,
+                expiry_date DATE,
+                notes TEXT,
+                user_id BIGINT,
+                user_name TEXT,
+                username TEXT,
+                created_at TIMESTAMPTZ NOT NULL
+            )""")
+            c.execute("CREATE INDEX IF NOT EXISTS idx_ride_documents_ride_id ON ride_documents(ride_id)")
+            c.execute("CREATE INDEX IF NOT EXISTS idx_ride_documents_category ON ride_documents(category)")
             c.execute("SELECT COUNT(*) AS n FROM company")
             if c.fetchone()["n"] == 0:
                 c.execute("INSERT INTO company(id,name) VALUES(1,%s)",("My Amusement Company",))
@@ -569,7 +587,24 @@ def ride_detail(ride_id):
             maintenance=c.fetchall()
             c.execute("SELECT * FROM accident_reports WHERE ride_id=%s ORDER BY incident_date DESC,id DESC",(ride_id,))
             accidents=c.fetchall()
-    return render_template("ride_detail.html", ride=ride, maintenance=maintenance, accidents=accidents)
+            c.execute("""SELECT id,ride_id,category,title,filename,mime_type,document_date,expiry_date,
+                               notes,user_id,user_name,username,created_at
+                        FROM ride_documents WHERE ride_id=%s
+                        ORDER BY category,created_at DESC,id DESC""",(ride_id,))
+            documents=c.fetchall()
+    categories={
+        "training":"Training Documentation",
+        "adips":"ADIPS Documents",
+        "public_liability":"Public Liability Insurance",
+        "guild_9_1":"Guild 9/1",
+        "risk_assessment":"Risk Assessments"
+    }
+    grouped_documents={key:[] for key in categories}
+    for doc in documents:
+        if doc["category"] in grouped_documents:
+            grouped_documents[doc["category"]].append(doc)
+    return render_template("ride_detail.html", ride=ride, maintenance=maintenance, accidents=accidents,
+                           categories=categories, grouped_documents=grouped_documents)
 
 @app.route("/ride/<int:ride_id>/maintenance/add", methods=["GET","POST"])
 @login_required
@@ -614,6 +649,91 @@ def add_accident(ride_id):
                     flash("Accident report added.")
                     return redirect(url_for("ride_detail",ride_id=ride_id))
     return render_template("accident_form.html", ride=ride, today=date.today().isoformat())
+
+
+DOCUMENT_CATEGORIES={
+    "training":"Training Documentation",
+    "adips":"ADIPS Documents",
+    "public_liability":"Public Liability Insurance",
+    "guild_9_1":"Guild 9/1",
+    "risk_assessment":"Risk Assessments"
+}
+ALLOWED_DOCUMENT_EXTENSIONS={".pdf",".doc",".docx",".xls",".xlsx",".jpg",".jpeg",".png",".webp",".txt"}
+MAX_DOCUMENT_BYTES=15*1024*1024
+
+@app.route("/admin/ride/<int:ride_id>/documents/add",methods=["GET","POST"])
+@admin_required
+def add_ride_document(ride_id):
+    with db() as conn:
+        with conn.cursor() as c:
+            c.execute("SELECT * FROM rides WHERE id=%s",(ride_id,))
+            ride=c.fetchone()
+            if not ride:
+                return "Ride not found",404
+            selected_category=request.args.get("category","training")
+            if request.method=="POST":
+                selected_category=request.form.get("category","")
+                title=request.form.get("title","").strip()
+                document_date=request.form.get("document_date") or None
+                expiry_date=request.form.get("expiry_date") or None
+                notes=request.form.get("notes","").strip()
+                uploaded=request.files.get("document")
+                if selected_category not in DOCUMENT_CATEGORIES:
+                    flash("Choose a valid document category.")
+                elif not title:
+                    flash("Enter a document title.")
+                elif not uploaded or not uploaded.filename:
+                    flash("Choose a file to upload.")
+                else:
+                    filename=os.path.basename(uploaded.filename)
+                    ext=os.path.splitext(filename)[1].lower()
+                    data=uploaded.read()
+                    if ext not in ALLOWED_DOCUMENT_EXTENSIONS:
+                        flash("Unsupported file type.")
+                    elif not data:
+                        flash("The selected file is empty.")
+                    elif len(data)>MAX_DOCUMENT_BYTES:
+                        flash("Document must be 15 MB or smaller.")
+                    else:
+                        c.execute("""INSERT INTO ride_documents(
+                            ride_id,category,title,filename,mime_type,file_data,document_date,expiry_date,
+                            notes,user_id,user_name,username,created_at
+                        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",(
+                            ride_id,selected_category,title,filename,
+                            uploaded.mimetype or "application/octet-stream",data,document_date,expiry_date,
+                            notes,session["user_id"],session["full_name"],session["username"],datetime.now()
+                        ))
+                        conn.commit()
+                        flash("Document uploaded.")
+                        return redirect(url_for("ride_detail",ride_id=ride_id))
+    return render_template("document_form.html",ride=ride,categories=DOCUMENT_CATEGORIES,
+                           selected_category=selected_category)
+
+@app.route("/ride/<int:ride_id>/documents/<int:document_id>/download")
+@login_required
+def download_ride_document(ride_id,document_id):
+    with db() as conn:
+        with conn.cursor() as c:
+            c.execute("SELECT filename,mime_type,file_data FROM ride_documents WHERE id=%s AND ride_id=%s",
+                      (document_id,ride_id))
+            doc=c.fetchone()
+            if not doc:
+                return "Document not found",404
+    safe_name=os.path.basename(doc["filename"]).replace('"',"")
+    return Response(bytes(doc["file_data"]),
+                    mimetype=doc["mime_type"] or "application/octet-stream",
+                    headers={"Content-Disposition":f'inline; filename="{safe_name}"'})
+
+@app.route("/admin/ride/<int:ride_id>/documents/<int:document_id>/delete",methods=["POST"])
+@admin_required
+def delete_ride_document(ride_id,document_id):
+    with db() as conn:
+        with conn.cursor() as c:
+            c.execute("DELETE FROM ride_documents WHERE id=%s AND ride_id=%s",(document_id,ride_id))
+            conn.commit()
+    flash("Document removed.")
+    return redirect(url_for("ride_detail",ride_id=ride_id))
+
 
 @app.route("/admin/export.csv")
 @admin_required

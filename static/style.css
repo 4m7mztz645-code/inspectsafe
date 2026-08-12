@@ -23,3 +23,10 @@ textarea{resize:vertical}.grid{display:grid;grid-template-columns:repeat(2,minma
 .attention-text{background:#fef3c7;color:#92400e;padding:12px;border-radius:10px}
 button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:750px){.ride-tools{grid-template-columns:1fr}}
+
+.document-sections{display:grid;gap:14px}.document-section{border:1px solid #e5e7eb;border-radius:13px;padding:14px;background:#fafbfc}
+.document-section-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}.document-section-head h3{margin:0;font-size:17px}
+.document-row{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-top:1px solid #e5e7eb}.document-main{min-width:0}
+.document-title{font-weight:900;color:#111827;text-decoration:none}.document-title:hover{text-decoration:underline}.document-notes{margin:5px 0;white-space:pre-wrap}
+.document-actions{display:flex;gap:6px;align-items:flex-start;flex-shrink:0}.document-actions form{margin:0}.empty-doc{padding:10px 0;color:#6b7280;font-size:13px}
+@media(max-width:650px){.document-section-head,.document-row{align-items:flex-start;flex-direction:column}.document-actions{width:100%}}

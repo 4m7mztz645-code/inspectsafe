@@ -100,3 +100,16 @@ Staff workflow:
 4. Complete the checks and save
 
 Changing Ghost Train checks does not affect Dodgems, Fun House, or any other ride.
+
+PER-RIDE DOCUMENT REGISTER
+--------------------------
+Every ride now contains:
+- Training Documentation
+- ADIPS Documents
+- Public Liability Insurance
+- Guild 9/1
+- Risk Assessments
+
+Administrators can upload multiple documents per section. Staff can view them.
+Each document stores its title, filename, optional document date, optional expiry/renewal
+date, notes, uploader and upload timestamp. Maximum upload size is 15 MB.
