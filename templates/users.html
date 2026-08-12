@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block title %}Staff Users{% endblock %}{% block content %}
+<h1>Staff Users</h1><div class="card"><h2>Add Staff Login</h2><form method="post" class="grid"><div><label>Full name</label><input name="full_name" required></div>
+<div><label>Username</label><input name="username" required></div><div><label>Password</label><input name="password" type="password" minlength="8" required></div>
+<div><label>Role</label><select name="role"><option value="staff">Staff</option><option value="admin">Administrator</option></select></div><div><button class="primary">Create User</button></div></form></div>
+<div class="card"><div class="tablewrap"><table><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Last login</th><th>Actions</th></tr></thead><tbody>
+{% for u in users %}<tr><td>{{u.full_name}}</td><td>@{{u.username}}</td><td>{{u.role}}</td><td>{{'Active' if u.active else 'Disabled'}}</td><td>{{u.last_login_at or 'Never'}}</td><td>
+<form class="inline" method="post" action="{{url_for('toggle_user',user_id=u.id)}}"><button class="small">{{'Disable' if u.active else 'Enable'}}</button></form>
+<form class="inline resetform" method="post" action="{{url_for('reset_password',user_id=u.id)}}"><input name="password" type="password" placeholder="New password" minlength="8" required><button class="small">Reset</button></form>
+</td></tr>{% endfor %}</tbody></table></div></div>{% endblock %}

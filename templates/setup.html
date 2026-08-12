@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block title %}Set Up RideSafe{% endblock %}{% block content %}
+<div class="authcard"><h1>Set up your company</h1><p>Create the first administrator account.</p>
+<form method="post"><label>Company name</label><input name="company_name" required>
+<label>Your full name</label><input name="full_name" required>
+<label>Admin username</label><input name="username" required autocomplete="username">
+<label>Password</label><input name="password" type="password" minlength="8" required>
+<button class="primary">Create Company Account</button></form></div>{% endblock %}

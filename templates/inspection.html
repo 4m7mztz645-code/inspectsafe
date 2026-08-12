@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block title %}Inspection Record{% endblock %}{% block content %}
+<div class="title-row"><div><h1>{{insp.ride_name}}</h1><p>{{insp.check_date}} · {{insp.user_name}} (@{{insp.username}})</p></div>
+<button class="button no-print" onclick="window.print()">Print</button></div>
+<div class="card summary"><div><b>Status</b><span class="status {{'pass' if insp.status=='PASS' else 'attention'}}">{{insp.status}}</span></div>
+<div><b>Fit for service</b><span>{{'YES' if insp.fit_for_service else 'NO'}}</span></div><div><b>Weather</b><span>{{insp.weather or '—'}}</span></div>
+<div><b>Signed</b><span>{{insp.signature}}</span></div></div><div class="card">{% for i in items %}<div class="inspection-line"><b>{{loop.index}}. {{i.item_text}}</b>
+<span class="status {{'pass' if i.result=='PASS' else 'attention' if i.result=='FAIL' else ''}}">{{i.result}}</span>{% if i.note %}<p><b>Note:</b> {{i.note}}</p>{% endif %}</div>{% endfor %}</div>
+<div class="card"><h2>General Notes</h2><p>{{insp.notes or '—'}}</p></div>{% endblock %}

@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block title %}Checklist Setup{% endblock %}{% block content %}
+<h1>Checklist Setup</h1><div class="card"><form method="post"><label>One inspection item per line</label>
+<textarea name="template" rows="26">{% for c in checks %}{{c.item}}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea><button class="primary">Save Checklist</button></form></div>{% endblock %}

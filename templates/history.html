@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block title %}History{% endblock %}{% block content %}
+<h1>{% if session.get('role')=='admin' %}Company Inspection History{% else %}My Inspection History{% endif %}</h1>
+<div class="card">{% if inspections %}<div class="tablewrap"><table><thead><tr><th>Date</th><th>Ride</th><th>Staff</th><th>Status</th><th>Fit</th><th></th></tr></thead><tbody>
+{% for x in inspections %}<tr><td>{{x.check_date}}</td><td>{{x.ride_name}}</td><td>{{x.user_name}}</td>
+<td><span class="status {{'pass' if x.status=='PASS' else 'attention'}}">{{x.status}}</span></td><td>{{'YES' if x.fit_for_service else 'NO'}}</td>
+<td><a href="{{url_for('inspection',inspection_id=x.id)}}">View</a></td></tr>{% endfor %}</tbody></table></div>{% else %}<p>No inspections saved yet.</p>{% endif %}</div>{% endblock %}

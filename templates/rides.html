@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block title %}Manage Rides{% endblock %}{% block content %}
+<h1>Manage Rides</h1><div class="card"><form method="post" class="grid"><div><label>Ride name</label><input name="name" required></div>
+<div><label>Serial / ID</label><input name="serial"></div><div><button class="primary">Add Ride</button></div></form></div>
+<div class="card"><div class="tablewrap"><table><thead><tr><th>Ride</th><th>Serial / ID</th><th>Status</th><th></th></tr></thead><tbody>
+{% for r in rides %}<tr><td>{{r.name}}</td><td>{{r.serial}}</td><td>{{'Active' if r.active else 'Disabled'}}</td>
+<td><form method="post" action="{{url_for('toggle_ride',ride_id=r.id)}}"><button class="small">{{'Disable' if r.active else 'Enable'}}</button></form></td></tr>{% endfor %}</tbody></table></div></div>{% endblock %}

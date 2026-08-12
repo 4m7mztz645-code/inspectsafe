@@ -1,0 +1,53 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827">
+<title>{% block title %}RideSafe{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}">
+</head>
+<body>
+<header>
+  <div>
+    <div class="brand">RideSafe</div>
+    <div class="sub">{{ company.name if company else 'Amusement Ride Checks' }}</div>
+  </div>
+  {% if session.get('user_id') %}
+  <nav>
+    <a href="{{ url_for('home') }}">New Check</a>
+    <a href="{{ url_for('history') }}">History</a>
+    {% if session.get('role')=='admin' %}
+      <a href="{{ url_for('admin_dashboard') }}">Management</a>
+    {% endif %}
+    <a href="{{ url_for('logout') }}">Log out</a>
+  </nav>
+  {% endif %}
+</header>
+{% if session.get('user_id') %}
+<div class="userstrip">
+  Signed in as <b>{{ session.get('full_name') }}</b>
+  <span>{{ 'Administrator' if session.get('role')=='admin' else 'Staff' }}</span>
+</div>
+{% endif %}
+<main>
+{% with messages=get_flashed_messages() %}
+  {% if messages %}
+    {% for m in messages %}<div class="flash">{{m}}</div>{% endfor %}
+  {% endif %}
+{% endwith %}
+{% block content %}{% endblock %}
+</main>
+<script>
+document.addEventListener("change",e=>{
+  if(e.target.matches("input[type=radio]")){
+    const box=e.target.closest(".check");
+    if(!box)return;
+    const note=box.querySelector(".fail-note");
+    if(note)note.style.display=e.target.value==="FAIL"?"block":"none";
+  }
+});
+</script>
+</body>
+</html>

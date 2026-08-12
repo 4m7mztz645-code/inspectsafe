@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block title %}New Daily Check{% endblock %}{% block content %}
+<h1>New Daily Check</h1>{% if not rides %}<div class="card"><p>No active rides are set up yet.</p>
+{% if session.get('role')=='admin' %}<a class="button" href="{{url_for('rides')}}">Set up rides</a>{% endif %}</div>{% else %}
+<form method="post" action="{{url_for('save_check')}}">
+<div class="card grid"><div><label>Ride</label><select name="ride_id" required>{% for r in rides %}<option value="{{r.id}}">{{r.name}}{% if r.serial %} — {{r.serial}}{% endif %}</option>{% endfor %}</select></div>
+<div><label>Date</label><input type="date" name="check_date" value="{{today}}" required></div>
+<div><label>Inspector</label><input value="{{session.get('full_name')}}" disabled></div>
+<div><label>Weather / Conditions</label><input name="weather"></div></div>
+<div class="card"><h2>Checklist</h2>{% for ch in checks %}<div class="check">
+<div class="check-title">{{loop.index}}. {{ch.item}}</div><div class="choices">
+<label><input type="radio" name="result_{{ch.id}}" value="PASS" required> PASS</label>
+<label><input type="radio" name="result_{{ch.id}}" value="FAIL"> FAIL</label>
+<label><input type="radio" name="result_{{ch.id}}" value="N/A"> N/A</label></div>
+<div class="fail-note"><input name="note_{{ch.id}}" placeholder="Defect / action taken"></div></div>{% endfor %}</div>
+<div class="card"><h2>Notes</h2><textarea name="notes" rows="5"></textarea></div>
+<div class="card"><h2>Sign-off</h2><label class="tick"><input type="checkbox" name="fit_for_service"> Ride is fit to enter service</label>
+<label>Signature / initials</label><input name="signature" required><button class="primary">Save Daily Check</button></div></form>{% endif %}{% endblock %}
