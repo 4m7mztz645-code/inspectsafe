@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% block title %}Checklist - {{ride.name}}{% endblock %}{% block content %}
+<div class="title-row">
+  <div><h1>{{ride.name}} Checklist</h1><p>{% if ride.adips_id %}ADIPS {{ride.adips_id}} · {% endif %}{{ride.serial or 'No serial/ID'}}</p></div>
+  <a class="button" href="{{url_for('ride_detail',ride_id=ride.id)}}">Back to Ride</a>
+</div>
+
+<div class="card">
+<h2>Add Check</h2>
+<form method="post">
+<label>Check description</label>
+<input name="item" placeholder="e.g. Check lap bar locking mechanism" required>
+<button class="primary">Add Check</button>
+</form>
+</div>
+
+<div class="card">
+<h2>Current Checks for {{ride.name}}</h2>
+{% if checks %}
+{% for c in checks %}
+<div class="check-admin-row">
+  <div><b>{{loop.index}}.</b> {{c.item}}</div>
+  <form method="post" action="{{url_for('delete_ride_check',ride_id=ride.id,check_id=c.id)}}" onsubmit="return confirm('Remove this check from {{ride.name}}?')">
+    <button class="small danger-btn">Remove</button>
+  </form>
+</div>
+{% endfor %}
+{% else %}
+<p>No checks have been added to this ride yet.</p>
+{% endif %}
+</div>
+{% endblock %}

@@ -1,17 +1,77 @@
 {% extends "base.html" %}{% block title %}New Daily Check{% endblock %}{% block content %}
-<h1>New Daily Check</h1>{% if not rides %}<div class="card"><p>No active rides are set up yet.</p>
-{% if session.get('role')=='admin' %}<a class="button" href="{{url_for('rides')}}">Set up rides</a>{% endif %}</div>{% else %}
-<form method="post" action="{{url_for('save_check')}}">
-<div class="card grid"><div><label>Ride</label><select name="ride_id" required>{% for r in rides %}<option value="{{r.id}}">{{r.name}}{% if r.serial %} — {{r.serial}}{% endif %}{% if r.adips_id %} · ADIPS {{r.adips_id}}{% endif %}</option>{% endfor %}</select></div>
-<div><label>Date</label><input type="date" name="check_date" value="{{today}}" required></div>
-<div><label>Inspector</label><input value="{{session.get('full_name')}}" disabled></div>
-<div><label>Weather / Conditions</label><input name="weather"></div></div>
-<div class="card"><h2>Checklist</h2>{% for ch in checks %}<div class="check">
-<div class="check-title">{{loop.index}}. {{ch.item}}</div><div class="choices">
-<label><input type="radio" name="result_{{ch.id}}" value="PASS" required> PASS</label>
-<label><input type="radio" name="result_{{ch.id}}" value="FAIL"> FAIL</label>
-<label><input type="radio" name="result_{{ch.id}}" value="N/A"> N/A</label></div>
-<div class="fail-note"><input name="note_{{ch.id}}" placeholder="Defect / action taken"></div></div>{% endfor %}</div>
+<h1>New Daily Check</h1>
+{% if not rides %}
+<div class="card"><p>No active rides are set up yet.</p>
+{% if session.get('role')=='admin' %}<a class="button" href="{{url_for('rides')}}">Set up rides</a>{% endif %}
+</div>
+{% else %}
+<form method="post" action="{{url_for('save_check')}}" id="checkForm">
+<div class="card grid">
+  <div>
+    <label>Ride</label>
+    <select name="ride_id" id="rideSelect" required>
+      <option value="">Select ride</option>
+      {% for r in rides %}
+      <option value="{{r.id}}">{{r.name}}{% if r.serial %} — {{r.serial}}{% endif %}{% if r.adips_id %} · ADIPS {{r.adips_id}}{% endif %}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div><label>Date</label><input type="date" name="check_date" value="{{today}}" required></div>
+  <div><label>Inspector</label><input value="{{session.get('full_name')}}" disabled></div>
+  <div><label>Weather / Conditions</label><input name="weather"></div>
+</div>
+
+<div class="card">
+  <h2>Checklist</h2>
+  <div id="checklistArea">
+    <p class="muted">Select a ride to load its checklist.</p>
+  </div>
+</div>
+
 <div class="card"><h2>Notes</h2><textarea name="notes" rows="5"></textarea></div>
-<div class="card"><h2>Sign-off</h2><label class="tick"><input type="checkbox" name="fit_for_service"> Ride is fit to enter service</label>
-<label>Signature / initials</label><input name="signature" required><button class="primary">Save Daily Check</button></div></form>{% endif %}{% endblock %}
+<div class="card">
+  <h2>Sign-off</h2>
+  <label class="tick"><input type="checkbox" name="fit_for_service"> Ride is fit to enter service</label>
+  <label>Signature / initials</label><input name="signature" required>
+  <button class="primary" id="saveCheckBtn">Save Daily Check</button>
+</div>
+</form>
+
+<script>
+const rideSelect=document.getElementById("rideSelect");
+const checklistArea=document.getElementById("checklistArea");
+const saveBtn=document.getElementById("saveCheckBtn");
+
+async function loadRideChecklist(){
+  const rideId=rideSelect.value;
+  if(!rideId){
+    checklistArea.innerHTML='<p class="muted">Select a ride to load its checklist.</p>';
+    saveBtn.disabled=true;
+    return;
+  }
+  checklistArea.innerHTML='<p class="muted">Loading checklist…</p>';
+  const res=await fetch(`/ride/${rideId}/checklist.json`);
+  const data=await res.json();
+  if(!data.checks.length){
+    checklistArea.innerHTML='<p class="attention-text"><b>No checklist has been set up for this ride.</b></p>{% if session.get("role")=="admin" %}<p><a class="button" href="/admin/ride/'+rideId+'/checklist">Set up this ride checklist</a></p>{% endif %}';
+    saveBtn.disabled=true;
+    return;
+  }
+  checklistArea.innerHTML=data.checks.map((ch,i)=>`
+    <div class="check">
+      <div class="check-title">${i+1}. ${escapeHtml(ch.item)}</div>
+      <div class="choices">
+        <label><input type="radio" name="result_${ch.id}" value="PASS" required> PASS</label>
+        <label><input type="radio" name="result_${ch.id}" value="FAIL"> FAIL</label>
+        <label><input type="radio" name="result_${ch.id}" value="N/A"> N/A</label>
+      </div>
+      <div class="fail-note"><input name="note_${ch.id}" placeholder="Defect / action taken"></div>
+    </div>`).join("");
+  saveBtn.disabled=false;
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+rideSelect.addEventListener("change",loadRideChecklist);
+saveBtn.disabled=true;
+</script>
+{% endif %}
+{% endblock %}

@@ -80,3 +80,23 @@ Each ride now supports a photo, ADIPS ID number, maintenance history and acciden
 Checklist editing is now one check at a time using the Add Check form.
 Ride photos are stored in PostgreSQL and limited to 5 MB.
 Maintenance and accident entries record the logged-in staff member and timestamp.
+
+
+PER-RIDE CHECKLISTS
+-------------------
+Each ride now has its own independent checklist.
+
+Management workflow:
+1. Management > Manage Rides & Logs
+2. Open a ride or press Checklist
+3. Press Add Check
+4. Add checks one at a time
+5. Repeat until that ride's checklist is complete
+
+Staff workflow:
+1. New Daily Check
+2. Select a ride
+3. RideSafe loads only that ride's checklist
+4. Complete the checks and save
+
+Changing Ghost Train checks does not affect Dodgems, Fun House, or any other ride.

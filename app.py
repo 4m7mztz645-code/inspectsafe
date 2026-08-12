@@ -82,6 +82,12 @@ def init_db():
                 item TEXT NOT NULL,
                 sort_order INTEGER NOT NULL
             )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS ride_checklist(
+                id BIGSERIAL PRIMARY KEY,
+                ride_id BIGINT NOT NULL,
+                item TEXT NOT NULL,
+                sort_order INTEGER NOT NULL
+            )""")
             c.execute("ALTER TABLE rides ADD COLUMN IF NOT EXISTS adips_id TEXT")
             c.execute("ALTER TABLE rides ADD COLUMN IF NOT EXISTS photo BYTEA")
             c.execute("ALTER TABLE rides ADD COLUMN IF NOT EXISTS photo_mime TEXT")
@@ -268,9 +274,17 @@ def home():
         with conn.cursor() as c:
             c.execute("SELECT * FROM rides WHERE active=TRUE ORDER BY name")
             rides = c.fetchall()
-            c.execute("SELECT * FROM checklist ORDER BY sort_order,id")
-            checks = c.fetchall()
-    return render_template("home.html", rides=rides, checks=checks, today=date.today().isoformat())
+    return render_template("home.html", rides=rides, today=date.today().isoformat())
+
+
+@app.route("/ride/<int:ride_id>/checklist.json")
+@login_required
+def ride_checklist_json(ride_id):
+    with db() as conn:
+        with conn.cursor() as c:
+            c.execute("SELECT id,item,sort_order FROM ride_checklist WHERE ride_id=%s ORDER BY sort_order,id",(ride_id,))
+            checks=c.fetchall()
+    return {"checks":checks}
 
 @app.route("/save-check", methods=["POST"])
 @login_required
@@ -280,10 +294,13 @@ def save_check():
             ride_id = int(request.form["ride_id"])
             c.execute("SELECT * FROM rides WHERE id=%s AND active=TRUE",(ride_id,))
             ride = c.fetchone()
-            c.execute("SELECT * FROM checklist ORDER BY sort_order,id")
+            c.execute("SELECT * FROM ride_checklist WHERE ride_id=%s ORDER BY sort_order,id",(ride_id,))
             checks = c.fetchall()
             if not ride:
                 flash("Ride not found.")
+                return redirect(url_for("home"))
+            if not checks:
+                flash("No checklist has been set up for this ride yet.")
                 return redirect(url_for("home"))
 
             items=[]
@@ -507,32 +524,36 @@ def toggle_ride(ride_id):
                 conn.commit()
     return redirect(url_for("rides"))
 
-@app.route("/admin/checklist",methods=["GET","POST"])
+@app.route("/admin/ride/<int:ride_id>/checklist",methods=["GET","POST"])
 @admin_required
-def checklist():
+def ride_checklist(ride_id):
     with db() as conn:
         with conn.cursor() as c:
+            c.execute("SELECT * FROM rides WHERE id=%s",(ride_id,))
+            ride=c.fetchone()
+            if not ride:
+                return "Ride not found",404
             if request.method=="POST":
                 item=request.form.get("item","").strip()
                 if item:
-                    c.execute("SELECT COALESCE(MAX(sort_order),-1)+1 AS next_order FROM checklist")
+                    c.execute("SELECT COALESCE(MAX(sort_order),-1)+1 AS next_order FROM ride_checklist WHERE ride_id=%s",(ride_id,))
                     next_order=c.fetchone()["next_order"]
-                    c.execute("INSERT INTO checklist(item,sort_order) VALUES (%s,%s)",(item,next_order))
+                    c.execute("INSERT INTO ride_checklist(ride_id,item,sort_order) VALUES (%s,%s,%s)",(ride_id,item,next_order))
                     conn.commit()
-                    flash("Check added.")
-            c.execute("SELECT * FROM checklist ORDER BY sort_order,id")
+                    flash("Check added to this ride.")
+            c.execute("SELECT * FROM ride_checklist WHERE ride_id=%s ORDER BY sort_order,id",(ride_id,))
             checks=c.fetchall()
-    return render_template("checklist.html", checks=checks)
+    return render_template("ride_checklist.html", ride=ride, checks=checks)
 
-@app.route("/admin/checklist/<int:check_id>/delete", methods=["POST"])
+@app.route("/admin/ride/<int:ride_id>/checklist/<int:check_id>/delete", methods=["POST"])
 @admin_required
-def delete_check(check_id):
+def delete_ride_check(ride_id,check_id):
     with db() as conn:
         with conn.cursor() as c:
-            c.execute("DELETE FROM checklist WHERE id=%s",(check_id,))
+            c.execute("DELETE FROM ride_checklist WHERE id=%s AND ride_id=%s",(check_id,ride_id))
             conn.commit()
-    flash("Check removed.")
-    return redirect(url_for("checklist"))
+    flash("Check removed from this ride.")
+    return redirect(url_for("ride_checklist",ride_id=ride_id))
 
 
 @app.route("/ride/<int:ride_id>")
