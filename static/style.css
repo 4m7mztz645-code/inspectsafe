@@ -38,3 +38,16 @@ button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:750px){
   .site-logo{height:48px}
 }
+
+.welcome-card{max-width:500px}
+.welcome-logo-wrap{text-align:center;margin-bottom:14px}
+.welcome-logo{max-width:280px;width:100%;height:auto}
+.choice-grid{display:grid;gap:12px}
+.choice-card{display:block;border:1px solid #d7dde5;border-radius:14px;padding:16px;text-decoration:none;color:#111827;background:#f8fafc;margin-top:10px}
+.choice-card:hover{border-color:#94a3b8;background:#f1f5f9}
+.primary-choice,.admin-choice{border-left:5px solid #0f766e}
+.choice-title{display:block;font-size:17px;font-weight:900;margin-bottom:4px}
+.choice-copy{display:block;color:#6b7280;font-size:13px;line-height:1.4}
+.login-section{margin-top:18px}
+.or-divider{display:flex;align-items:center;gap:10px;color:#6b7280;margin:20px 0 10px}
+.or-divider:before,.or-divider:after{content:"";height:1px;background:#d7dde5;flex:1}

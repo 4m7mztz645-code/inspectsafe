@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Create Administrator - Inspect Safe{% endblock %}
+{% block content %}
+<div class="authcard">
+  <div class="welcome-logo-wrap">
+    <img class="welcome-logo" src="{{ url_for('static', filename='inspectsafe_logo.png') }}" alt="Inspect Safe">
+  </div>
+
+  <h1>Create Administrator Account</h1>
+
+  {% if registration_enabled %}
+  <p class="muted">Enter your details and the administrator registration code supplied by your company.</p>
+  <form method="post">
+    <label>Full name</label>
+    <input name="full_name" required>
+
+    <label>Username</label>
+    <input name="username" required autocomplete="username">
+
+    <label>Password</label>
+    <input name="password" type="password" minlength="8" required autocomplete="new-password">
+
+    <label>Administrator registration code</label>
+    <input name="registration_code" type="password" required autocomplete="off">
+
+    <button class="primary">Create Administrator Account</button>
+  </form>
+  {% else %}
+  <div class="flash">
+    Administrator self-registration is not enabled yet. The company owner needs to add
+    <b>RIDESAFE_ADMIN_REGISTRATION_CODE</b> in Railway first.
+  </div>
+  {% endif %}
+
+  <p style="margin-top:16px"><a href="{{ url_for('login') }}">← Back to login</a></p>
+</div>
+{% endblock %}

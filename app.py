@@ -16,6 +16,8 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL environment variable is required.")
 
+ADMIN_REGISTRATION_CODE = os.environ.get("RIDESAFE_ADMIN_REGISTRATION_CODE", "")
+
 DEFAULT_CHECKS = [
     "General visual inspection of ride structure and framework",
     "Check foundations, supports, packing, levelling and stabilisers",
@@ -250,6 +252,47 @@ def setup():
                     return redirect(url_for("login"))
     return render_template("setup.html")
 
+
+@app.route("/register-admin", methods=["GET","POST"])
+def register_admin():
+    with db() as conn:
+        with conn.cursor() as c:
+            c.execute("SELECT COUNT(*) AS n FROM users")
+            user_count = c.fetchone()["n"]
+
+            # The very first administrator continues through the normal company setup flow.
+            if user_count == 0:
+                return redirect(url_for("setup"))
+
+            if request.method == "POST":
+                full_name = request.form.get("full_name","").strip()
+                username = request.form.get("username","").strip().lower()
+                password = request.form.get("password","")
+                registration_code = request.form.get("registration_code","")
+
+                if not ADMIN_REGISTRATION_CODE:
+                    flash("Administrator self-registration has not been enabled by the company.")
+                elif registration_code != ADMIN_REGISTRATION_CODE:
+                    flash("Incorrect administrator registration code.")
+                elif not full_name or not username or len(password) < 8:
+                    flash("Complete all fields. Password must be at least 8 characters.")
+                else:
+                    try:
+                        c.execute("""INSERT INTO users(
+                            full_name,username,password_hash,role,active,created_at
+                        ) VALUES (%s,%s,%s,%s,TRUE,%s)""",
+                        (full_name,username,generate_password_hash(password),"admin",datetime.now()))
+                        conn.commit()
+                        flash("Administrator account created. You can now log in.")
+                        return redirect(url_for("login"))
+                    except Exception:
+                        conn.rollback()
+                        flash("That username already exists.")
+
+    return render_template("register_admin.html",
+                           registration_enabled=bool(ADMIN_REGISTRATION_CODE))
+
+
 @app.route("/login", methods=["GET","POST"])
 def login():
     with db() as conn:
@@ -257,7 +300,7 @@ def login():
             c.execute("SELECT COUNT(*) AS n FROM users")
             count = c.fetchone()["n"]
             if count == 0:
-                return redirect(url_for("setup"))
+                return render_template("login.html", first_setup=True)
 
             if request.method == "POST":
                 username = request.form.get("username","").strip().lower()
@@ -278,7 +321,7 @@ def login():
                               (user["id"],user["username"],user["full_name"],now))
                     conn.commit()
                     return redirect(url_for("home"))
-    return render_template("login.html")
+    return render_template("login.html", first_setup=False)
 
 @app.route("/logout")
 def logout():

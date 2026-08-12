@@ -130,3 +130,26 @@ Files added:
 - static/apple-touch-icon.png
 - static/favicon-32.png
 - static/manifest.json
+
+
+NEW DEVICE LOGIN / ADMIN CREATION
+---------------------------------
+When Inspect Safe is opened on a device, the welcome screen now offers:
+- Log In
+- Create Administrator Account
+
+For the very first company user:
+- Create Administrator Account opens the initial company setup.
+
+For an existing company:
+- Creating a new Administrator requires the Railway environment variable:
+  RIDESAFE_ADMIN_REGISTRATION_CODE
+
+Recommended value:
+- Use a long private code known only to company management.
+- Do not share this code with ordinary staff.
+
+Example Railway variable:
+RIDESAFE_ADMIN_REGISTRATION_CODE=YourPrivateAdminCodeHere
+
+This prevents anyone who discovers the website from creating themselves an administrator.

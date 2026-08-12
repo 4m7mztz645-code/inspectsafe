@@ -1,5 +1,39 @@
-{% extends "base.html" %}{% block title %}Login - RideSafe{% endblock %}{% block content %}
-<div class="authcard"><h1>Staff Login</h1><p>Sign in to access your company's RideSafe app.</p>
-<form method="post"><label>Username</label><input name="username" required autocomplete="username">
-<label>Password</label><input name="password" type="password" required autocomplete="current-password">
-<button class="primary">Sign In</button></form></div>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Welcome - Inspect Safe{% endblock %}
+{% block content %}
+<div class="authcard welcome-card">
+  <div class="welcome-logo-wrap">
+    <img class="welcome-logo" src="{{ url_for('static', filename='inspectsafe_logo.png') }}" alt="Inspect Safe">
+  </div>
+
+  <h1>Welcome to Inspect Safe</h1>
+  <p class="muted">Choose how you want to continue on this device.</p>
+
+  {% if first_setup %}
+    <div class="choice-grid">
+      <a class="choice-card primary-choice" href="{{ url_for('setup') }}">
+        <span class="choice-title">Create Administrator Account</span>
+        <span class="choice-copy">Set up the company and create the first administrator.</span>
+      </a>
+    </div>
+  {% else %}
+    <div class="login-section">
+      <h2>Log In</h2>
+      <form method="post">
+        <label>Username</label>
+        <input name="username" required autocomplete="username">
+        <label>Password</label>
+        <input name="password" type="password" required autocomplete="current-password">
+        <button class="primary">Log In</button>
+      </form>
+    </div>
+
+    <div class="or-divider"><span>or</span></div>
+
+    <a class="choice-card admin-choice" href="{{ url_for('register_admin') }}">
+      <span class="choice-title">Create Administrator Account</span>
+      <span class="choice-copy">Create another administrator using the company registration code.</span>
+    </a>
+  {% endif %}
+</div>
+{% endblock %}
