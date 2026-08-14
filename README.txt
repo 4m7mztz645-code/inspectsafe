@@ -153,3 +153,31 @@ Example Railway variable:
 RIDESAFE_ADMIN_REGISTRATION_CODE=YourPrivateAdminCodeHere
 
 This prevents anyone who discovers the website from creating themselves an administrator.
+
+
+CLEAN START VERSION
+-------------------
+This package is intended to start Inspect Safe again as a new installation.
+
+The application code contains no preloaded users, completed checks, maintenance history,
+accident history, login history or uploaded ride records.
+
+IMPORTANT:
+Your live data is stored in Railway PostgreSQL, not inside this ZIP.
+Uploading this ZIP alone will NOT erase an existing Railway database.
+
+To make the existing live Railway installation completely new:
+1. Back up anything you may need.
+2. Open the Inspect Safe PostgreSQL database in Railway.
+3. Run the included file:
+   RESET_DATABASE_TO_NEW.sql
+4. Redeploy this application package.
+5. Open Inspect Safe.
+6. Choose "Create Administrator Account".
+7. Set up the company and first administrator again.
+
+Tables cleared by the reset script:
+inspection_items, inspections, ride_checklist, maintenance_logs, accident_reports, ride_documents, login_log, rides, users, company, checklist
+
+The database schema remains in place and the application will recreate/upgrade any
+required tables automatically on startup.
