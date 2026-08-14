@@ -181,3 +181,25 @@ inspection_items, inspections, ride_checklist, maintenance_logs, accident_report
 
 The database schema remains in place and the application will recreate/upgrade any
 required tables automatically on startup.
+
+
+PRIVATE SITE ACCESS CODE
+------------------------
+This version adds a private access-code screen before the normal Inspect Safe login.
+
+Set this Railway environment variable on the web/app service:
+
+INSPECTSAFE_ACCESS_CODE
+
+Example:
+INSPECTSAFE_ACCESS_CODE=YourPrivateCodeHere
+
+How it works:
+- Anyone opening Inspect Safe must enter the private access code first.
+- Only after the correct code is entered can they reach the normal login / administrator setup.
+- The browser remembers access for that session.
+- The normal username/password login is still required after the site access code.
+- The access code is NOT stored in the source code or GitHub when configured through Railway.
+- Changing INSPECTSAFE_ACCESS_CODE in Railway changes the required code for future sessions.
+
+For security, use a long code that is different from your administrator password.

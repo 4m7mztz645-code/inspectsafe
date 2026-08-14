@@ -17,6 +17,7 @@ if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL environment variable is required.")
 
 ADMIN_REGISTRATION_CODE = os.environ.get("RIDESAFE_ADMIN_REGISTRATION_CODE", "")
+SITE_ACCESS_CODE = os.environ.get("INSPECTSAFE_ACCESS_CODE", "")
 
 DEFAULT_CHECKS = [
     "General visual inspection of ride structure and framework",
@@ -227,6 +228,61 @@ def health():
         return {"status":"ok"},200
     except Exception as e:
         return {"status":"error","detail":str(e)},500
+
+
+@app.before_request
+def require_site_access_code():
+    # Always allow static files and the access-code page itself.
+    if request.endpoint in ("static", "site_access"):
+        return None
+
+    # If no code is configured, don't block the site.
+    if not SITE_ACCESS_CODE:
+        return None
+
+    # Once entered correctly, remember access in this browser session.
+    if session.get("site_access_granted") is True:
+        return None
+
+    return redirect(url_for("site_access", next=request.full_path if request.query_string else request.path))
+
+
+@app.route("/access", methods=["GET","POST"])
+def site_access():
+    if not SITE_ACCESS_CODE:
+        return redirect(url_for("login"))
+
+    if session.get("site_access_granted") is True:
+        return redirect(url_for("home") if session.get("user_id") else url_for("login"))
+
+    if request.method == "POST":
+        code = request.form.get("access_code","")
+        next_url = request.form.get("next","") or url_for("login")
+
+        if code == SITE_ACCESS_CODE:
+            session["site_access_granted"] = True
+
+            # Only allow local relative redirects for safety.
+            if not next_url.startswith("/") or next_url.startswith("//"):
+                next_url = url_for("login")
+
+            return redirect(next_url)
+
+        flash("Incorrect access code.")
+
+    return render_template("access.html", next_url=request.args.get("next",""))
+
+
+@app.route("/lock-site", methods=["POST"])
+def lock_site():
+    session.pop("site_access_granted", None)
+    session.pop("user_id", None)
+    session.pop("username", None)
+    session.pop("full_name", None)
+    session.pop("role", None)
+    flash("Inspect Safe has been locked.")
+    return redirect(url_for("site_access"))
+
 
 @app.route("/setup", methods=["GET","POST"])
 def setup():

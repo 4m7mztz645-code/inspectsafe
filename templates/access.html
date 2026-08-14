@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Private Access - Inspect Safe{% endblock %}
+{% block content %}
+<div class="authcard access-card">
+  <div class="welcome-logo-wrap">
+    <img class="welcome-logo" src="{{ url_for('static', filename='inspectsafe_logo.png') }}" alt="Inspect Safe">
+  </div>
+
+  <h1>Private Access</h1>
+  <p class="muted">Enter the Inspect Safe access code to continue.</p>
+
+  <form method="post">
+    <input type="hidden" name="next" value="{{ next_url or url_for('login') }}">
+
+    <label>Access code</label>
+    <input name="access_code" type="password" required autocomplete="off" autofocus>
+
+    <button class="primary">Continue</button>
+  </form>
+</div>
+{% endblock %}
