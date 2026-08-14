@@ -1,6 +1,13 @@
 {% extends "base.html" %}{% block title %}{{ride.name}}{% endblock %}{% block content %}<div class="ride-detail-head"><div><h1>{{ride.name}}</h1><p><b>Serial / ID:</b> {{ride.serial or '—'}} &nbsp; <b>ADIPS ID:</b> {{ride.adips_id or '—'}}</p></div>{% if ride.photo %}<img class="ride-photo detail-photo" src="{{url_for('ride_photo',ride_id=ride.id)}}" alt="{{ride.name}}">{% endif %}</div>
 <div class="adminlinks two"><a class="cardlink" href="{{url_for('add_maintenance',ride_id=ride.id)}}">Add Maintenance Log</a><a class="cardlink accident-link" href="{{url_for('add_accident',ride_id=ride.id)}}">Add Accident Report</a></div>
 
+<div class="card ride-checklist-action">
+  <h2>Daily Checklist</h2>
+  <p class="muted">Add or remove the checks used for this ride's daily inspection.</p>
+  {% if session.get('role')=='admin' %}
+  <a class="button primary" href="{{url_for('ride_checklist',ride_id=ride.id)}}">Edit Ride Checklist</a>
+  {% endif %}
+</div>
 <div class="card"><div class="title-row"><div><h2>Ride Documents</h2><p class="muted">Training, ADIPS, insurance, Guild 9/1 and risk-assessment records for this ride.</p></div></div>
 <div class="document-sections">{% for category_key,category_label in categories.items() %}<section class="document-section">
 <div class="document-section-head"><h3>{{category_label}}</h3>{% if session.get('role')=='admin' %}<a class="small button" href="{{url_for('add_ride_document',ride_id=ride.id,category=category_key)}}">+ Add Document</a>{% endif %}</div>

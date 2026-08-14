@@ -218,3 +218,15 @@ Set the code in Railway:
 INSPECTSAFE_ACCESS_CODE=your-private-code
 
 If this Railway variable is not set, the login will not enforce a private code.
+
+
+RIDE CHECKLIST ADD / REMOVE
+---------------------------
+Administrators can edit each ride's checklist independently.
+
+From the ride page choose Edit Ride Checklist:
+- Add checks one at a time
+- See all current checks
+- Remove any individual check
+- Changes apply only to that ride
+- Future daily inspections immediately use the updated checklist
