@@ -203,3 +203,18 @@ How it works:
 - Changing INSPECTSAFE_ACCESS_CODE in Railway changes the required code for future sessions.
 
 For security, use a long code that is different from your administrator password.
+
+
+CORRECTED LOGIN ACCESS CODE
+---------------------------
+The private access code is now required directly on the normal login screen.
+
+Login requires:
+- Private access code
+- Username
+- Password
+
+Set the code in Railway:
+INSPECTSAFE_ACCESS_CODE=your-private-code
+
+If this Railway variable is not set, the login will not enforce a private code.

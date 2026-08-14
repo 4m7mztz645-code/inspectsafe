@@ -230,60 +230,6 @@ def health():
         return {"status":"error","detail":str(e)},500
 
 
-@app.before_request
-def require_site_access_code():
-    # Always allow static files and the access-code page itself.
-    if request.endpoint in ("static", "site_access"):
-        return None
-
-    # If no code is configured, don't block the site.
-    if not SITE_ACCESS_CODE:
-        return None
-
-    # Once entered correctly, remember access in this browser session.
-    if session.get("site_access_granted") is True:
-        return None
-
-    return redirect(url_for("site_access", next=request.full_path if request.query_string else request.path))
-
-
-@app.route("/access", methods=["GET","POST"])
-def site_access():
-    if not SITE_ACCESS_CODE:
-        return redirect(url_for("login"))
-
-    if session.get("site_access_granted") is True:
-        return redirect(url_for("home") if session.get("user_id") else url_for("login"))
-
-    if request.method == "POST":
-        code = request.form.get("access_code","")
-        next_url = request.form.get("next","") or url_for("login")
-
-        if code == SITE_ACCESS_CODE:
-            session["site_access_granted"] = True
-
-            # Only allow local relative redirects for safety.
-            if not next_url.startswith("/") or next_url.startswith("//"):
-                next_url = url_for("login")
-
-            return redirect(next_url)
-
-        flash("Incorrect access code.")
-
-    return render_template("access.html", next_url=request.args.get("next",""))
-
-
-@app.route("/lock-site", methods=["POST"])
-def lock_site():
-    session.pop("site_access_granted", None)
-    session.pop("user_id", None)
-    session.pop("username", None)
-    session.pop("full_name", None)
-    session.pop("role", None)
-    flash("Inspect Safe has been locked.")
-    return redirect(url_for("site_access"))
-
-
 @app.route("/setup", methods=["GET","POST"])
 def setup():
     with db() as conn:
@@ -325,8 +271,11 @@ def register_admin():
                 username = request.form.get("username","").strip().lower()
                 password = request.form.get("password","")
                 registration_code = request.form.get("registration_code","")
+                site_access_code = request.form.get("site_access_code","")
 
-                if not ADMIN_REGISTRATION_CODE:
+                if SITE_ACCESS_CODE and site_access_code != SITE_ACCESS_CODE:
+                    flash("Incorrect private access code.")
+                elif not ADMIN_REGISTRATION_CODE:
                     flash("Administrator self-registration has not been enabled by the company.")
                 elif registration_code != ADMIN_REGISTRATION_CODE:
                     flash("Incorrect administrator registration code.")
@@ -355,14 +304,22 @@ def login():
         with conn.cursor() as c:
             c.execute("SELECT COUNT(*) AS n FROM users")
             count = c.fetchone()["n"]
+
             if count == 0:
                 return render_template("login.html", first_setup=True)
 
             if request.method == "POST":
+                access_code = request.form.get("access_code","")
                 username = request.form.get("username","").strip().lower()
                 password = request.form.get("password","")
+
+                if SITE_ACCESS_CODE and access_code != SITE_ACCESS_CODE:
+                    flash("Incorrect access code.")
+                    return render_template("login.html", first_setup=False)
+
                 c.execute("SELECT * FROM users WHERE username=%s",(username,))
                 user = c.fetchone()
+
                 if not user or not user["active"] or not check_password_hash(user["password_hash"],password):
                     flash("Incorrect username or password.")
                 else:
@@ -377,6 +334,7 @@ def login():
                               (user["id"],user["username"],user["full_name"],now))
                     conn.commit()
                     return redirect(url_for("home"))
+
     return render_template("login.html", first_setup=False)
 
 @app.route("/logout")
