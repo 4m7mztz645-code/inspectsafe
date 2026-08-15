@@ -1,1 +1,47 @@
-{% extends "base.html" %}{% block title %}Maintenance - {{ride.name}}{% endblock %}{% block content %}<h1>Add Maintenance Log</h1><p>{{ride.name}}{% if ride.adips_id %} · ADIPS {{ride.adips_id}}{% endif %}</p><div class="card"><form method="post"><div class="grid"><div><label>Date</label><input type="date" name="log_date" value="{{today}}" required></div><div><label>Category</label><select name="category"><option>Routine Maintenance</option><option>Repair</option><option>Defect</option><option>Adjustment</option><option>Inspection Follow-up</option><option>Other</option></select></div></div><label>Description / fault</label><textarea name="description" rows="4" required></textarea><label>Action taken</label><textarea name="action_taken" rows="4"></textarea><label>Parts used / replaced</label><textarea name="parts_used" rows="3"></textarea><label class="tick"><input type="checkbox" name="out_of_service"> Ride taken out of service</label><label class="tick"><input type="checkbox" name="returned_to_service"> Ride returned to service after work</label><button class="primary">Save Maintenance Log</button></form></div>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Maintenance - {{ride.name}}{% endblock %}
+{% block content %}
+<h1>{{'Edit Maintenance Log' if editing else 'Add Maintenance Log'}}</h1>
+<p>{{ride.name}}{% if ride.adips_id %} · ADIPS {{ride.adips_id}}{% endif %}</p>
+<div class="card">
+<form method="post">
+  <div class="grid">
+    <div>
+      <label>Date</label>
+      <input type="date" name="log_date" value="{{log.log_date if editing else today}}" required>
+    </div>
+    <div>
+      <label>Category</label>
+      {% set cat = log.category if editing else '' %}
+      <select name="category">
+        {% for opt in ['Routine Maintenance','Repair','Defect','Adjustment','Inspection Follow-up','Other'] %}
+        <option {% if cat==opt %}selected{% endif %}>{{opt}}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <label>Description / fault</label>
+  <textarea name="description" rows="4" required>{{log.description if editing else ''}}</textarea>
+
+  <label>Action taken</label>
+  <textarea name="action_taken" rows="4">{{log.action_taken if editing else ''}}</textarea>
+
+  <label>Parts used / replaced</label>
+  <textarea name="parts_used" rows="3">{{log.parts_used if editing else ''}}</textarea>
+
+  <label class="tick">
+    <input type="checkbox" name="out_of_service" {% if editing and log.out_of_service %}checked{% endif %}>
+    Ride taken out of service
+  </label>
+
+  <label class="tick">
+    <input type="checkbox" name="returned_to_service" {% if editing and log.returned_to_service %}checked{% endif %}>
+    Ride returned to service after work
+  </label>
+
+  <button class="primary">{{'Save Changes' if editing else 'Save Maintenance Log'}}</button>
+  <a class="button" href="{{url_for('ride_detail',ride_id=ride.id)}}">Cancel</a>
+</form>
+</div>
+{% endblock %}

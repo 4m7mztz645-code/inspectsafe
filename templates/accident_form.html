@@ -1,1 +1,38 @@
-{% extends "base.html" %}{% block title %}Accident Report - {{ride.name}}{% endblock %}{% block content %}<h1>Add Accident / Incident Report</h1><p>{{ride.name}}{% if ride.adips_id %} · ADIPS {{ride.adips_id}}{% endif %}</p><div class="card"><form method="post"><div class="grid"><div><label>Date</label><input type="date" name="incident_date" value="{{today}}" required></div><div><label>Time</label><input type="time" name="incident_time"></div><div><label>Location</label><input name="location"></div><div><label>Person involved</label><input name="person_name"></div><div><label>Contact details</label><input name="person_contact"></div><div><label>Reported to</label><input name="reported_to" placeholder="Manager / authority / insurer"></div></div><label>Incident description</label><textarea name="incident_description" rows="5" required></textarea><label>Injury details</label><textarea name="injury_details" rows="4"></textarea><label>Immediate action taken</label><textarea name="immediate_action" rows="4"></textarea><label>Witnesses / contact details</label><textarea name="witnesses" rows="3"></textarea><label class="tick"><input type="checkbox" name="ride_stopped"> Ride stopped / taken out of service</label><button class="primary">Save Accident Report</button></form></div>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Accident Report - {{ride.name}}{% endblock %}
+{% block content %}
+<h1>{{'Edit Accident / Incident Report' if editing else 'Add Accident / Incident Report'}}</h1>
+<p>{{ride.name}}{% if ride.adips_id %} · ADIPS {{ride.adips_id}}{% endif %}</p>
+<div class="card">
+<form method="post">
+  <div class="grid">
+    <div><label>Date</label><input type="date" name="incident_date" value="{{report.incident_date if editing else today}}" required></div>
+    <div><label>Time</label><input type="time" name="incident_time" value="{{report.incident_time if editing and report.incident_time else ''}}"></div>
+    <div><label>Location</label><input name="location" value="{{report.location if editing else ''}}"></div>
+    <div><label>Person involved</label><input name="person_name" value="{{report.person_name if editing else ''}}"></div>
+    <div><label>Contact details</label><input name="person_contact" value="{{report.person_contact if editing else ''}}"></div>
+    <div><label>Reported to</label><input name="reported_to" value="{{report.reported_to if editing else ''}}" placeholder="Manager / authority / insurer"></div>
+  </div>
+
+  <label>Incident description</label>
+  <textarea name="incident_description" rows="5" required>{{report.incident_description if editing else ''}}</textarea>
+
+  <label>Injury details</label>
+  <textarea name="injury_details" rows="4">{{report.injury_details if editing else ''}}</textarea>
+
+  <label>Immediate action taken</label>
+  <textarea name="immediate_action" rows="4">{{report.immediate_action if editing else ''}}</textarea>
+
+  <label>Witnesses / contact details</label>
+  <textarea name="witnesses" rows="3">{{report.witnesses if editing else ''}}</textarea>
+
+  <label class="tick">
+    <input type="checkbox" name="ride_stopped" {% if editing and report.ride_stopped %}checked{% endif %}>
+    Ride stopped / taken out of service
+  </label>
+
+  <button class="primary">{{'Save Changes' if editing else 'Save Accident Report'}}</button>
+  <a class="button" href="{{url_for('ride_detail',ride_id=ride.id)}}">Cancel</a>
+</form>
+</div>
+{% endblock %}

@@ -230,3 +230,16 @@ From the ride page choose Edit Ride Checklist:
 - Remove any individual check
 - Changes apply only to that ride
 - Future daily inspections immediately use the updated checklist
+
+
+STAFF AND ADMIN LOG ACCESS
+--------------------------
+Both Staff and Administrator accounts can now:
+- View Maintenance Logs
+- Add Maintenance Logs
+- Edit Maintenance Logs
+- View Accident / Incident Reports
+- Add Accident / Incident Reports
+- Edit Accident / Incident Reports
+
+Checklist setup, user management and other administrator controls remain admin-only.

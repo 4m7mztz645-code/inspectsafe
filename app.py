@@ -708,6 +708,89 @@ def add_accident(ride_id):
     return render_template("accident_form.html", ride=ride, today=date.today().isoformat())
 
 
+
+@app.route("/ride/<int:ride_id>/maintenance/<int:log_id>/edit", methods=["GET","POST"])
+@login_required
+def edit_maintenance(ride_id,log_id):
+    with db() as conn:
+        with conn.cursor() as c:
+            c.execute("SELECT * FROM rides WHERE id=%s",(ride_id,))
+            ride=c.fetchone()
+            if not ride:
+                return "Ride not found",404
+
+            c.execute("SELECT * FROM maintenance_logs WHERE id=%s AND ride_id=%s",(log_id,ride_id))
+            log=c.fetchone()
+            if not log:
+                return "Maintenance log not found",404
+
+            if request.method=="POST":
+                description=request.form.get("description","").strip()
+                if not description:
+                    flash("Maintenance description is required.")
+                else:
+                    c.execute("""UPDATE maintenance_logs
+                                 SET log_date=%s,category=%s,description=%s,action_taken=%s,
+                                     parts_used=%s,out_of_service=%s,returned_to_service=%s
+                                 WHERE id=%s AND ride_id=%s""",(
+                        request.form.get("log_date",date.today().isoformat()),
+                        request.form.get("category","").strip(),
+                        description,
+                        request.form.get("action_taken","").strip(),
+                        request.form.get("parts_used","").strip(),
+                        request.form.get("out_of_service")=="on",
+                        request.form.get("returned_to_service")=="on",
+                        log_id,ride_id))
+                    conn.commit()
+                    flash("Maintenance log updated.")
+                    return redirect(url_for("ride_detail",ride_id=ride_id))
+
+    return render_template("maintenance_form.html",ride=ride,log=log,editing=True,today=date.today().isoformat())
+
+
+@app.route("/ride/<int:ride_id>/accident/<int:report_id>/edit", methods=["GET","POST"])
+@login_required
+def edit_accident(ride_id,report_id):
+    with db() as conn:
+        with conn.cursor() as c:
+            c.execute("SELECT * FROM rides WHERE id=%s",(ride_id,))
+            ride=c.fetchone()
+            if not ride:
+                return "Ride not found",404
+
+            c.execute("SELECT * FROM accident_reports WHERE id=%s AND ride_id=%s",(report_id,ride_id))
+            report=c.fetchone()
+            if not report:
+                return "Accident / incident report not found",404
+
+            if request.method=="POST":
+                description=request.form.get("incident_description","").strip()
+                if not description:
+                    flash("Incident description is required.")
+                else:
+                    c.execute("""UPDATE accident_reports
+                                 SET incident_date=%s,incident_time=%s,location=%s,person_name=%s,
+                                     person_contact=%s,injury_details=%s,incident_description=%s,
+                                     immediate_action=%s,witnesses=%s,reported_to=%s,ride_stopped=%s
+                                 WHERE id=%s AND ride_id=%s""",(
+                        request.form.get("incident_date",date.today().isoformat()),
+                        request.form.get("incident_time","").strip(),
+                        request.form.get("location","").strip(),
+                        request.form.get("person_name","").strip(),
+                        request.form.get("person_contact","").strip(),
+                        request.form.get("injury_details","").strip(),
+                        description,
+                        request.form.get("immediate_action","").strip(),
+                        request.form.get("witnesses","").strip(),
+                        request.form.get("reported_to","").strip(),
+                        request.form.get("ride_stopped")=="on",
+                        report_id,ride_id))
+                    conn.commit()
+                    flash("Accident / incident report updated.")
+                    return redirect(url_for("ride_detail",ride_id=ride_id))
+
+    return render_template("accident_form.html",ride=ride,report=report,editing=True,today=date.today().isoformat())
+
 DOCUMENT_CATEGORIES={
     "training":"Training Documentation",
     "adips":"ADIPS Documents",
